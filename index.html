@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>الهروب من غرفة السايبر</title>
+<style>
+:root{--bg:#050b14;--panel:#0b1626;--line:#12304d;--g:#00ff9c;--c:#27d3ff;--r:#ff4d6d;--t:#d8ecff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#050b14}}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:radial-gradient(ellipse at top,#0a2038,var(--bg) 60%);color:var(--t);font-family:Tahoma,"Segoe UI",Arial,sans-serif;min-height:100vh}
+.wrap{max-width:640px;margin:0 auto;padding:18px}
+h1{font-size:26px;margin:8px 0;color:var(--g);text-shadow:0 0 14px #00ff9c88;text-align:center}
+.sub{text-align:center;color:var(--c);margin-bottom:18px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:0 0 24px #00000066}
+button{font:inherit;cursor:pointer}
+.btn{background:var(--g);color:#032;border:0;border-radius:10px;padding:12px 22px;font-weight:bold;font-size:17px;width:100%}
+.btn:hover{filter:brightness(1.1)}
+input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:#06101d;color:var(--t);font:inherit;margin:10px 0}
+.hud{display:flex;justify-content:space-between;gap:8px;font-size:15px;margin-bottom:12px;color:var(--c)}
+.hud b{color:var(--g);font-variant-numeric:tabular-nums}
+.doors{display:flex;gap:5px;margin-bottom:14px}
+.door{flex:1;height:34px;border-radius:6px;border:1px solid var(--line);background:#06101d;display:flex;align-items:center;justify-content:center;font-size:15px}
+.door.open{background:#00ff9c22;border-color:var(--g)}
+.door.cur{border-color:var(--c);box-shadow:0 0 10px var(--c)}
+.q{font-size:20px;line-height:1.7;margin:6px 0 14px}
+.opt{display:block;width:100%;text-align:right;background:#06101d;color:var(--t);border:1px solid var(--line);border-radius:10px;padding:13px;margin:8px 0;font-size:17px}
+.opt:hover{border-color:var(--c)}
+.opt.ok{background:#00ff9c33;border-color:var(--g)}
+.opt.bad{background:#ff4d6d33;border-color:var(--r)}
+.msg{min-height:24px;text-align:center;margin-top:8px;font-weight:bold}
+.big{font-size:44px;text-align:center;margin:6px 0;color:var(--g);font-variant-numeric:tabular-nums}
+.hide{display:none}
+.lb{margin-top:12px;font-size:15px}
+.lb div{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🔐 الهروب من غرفة السايبر</h1>
+<div class="sub">مهمة إنقاذ النظام — 10 أبواب، 10 أسئلة، والوقت يمر!</div>
+
+<div id="start" class="card">
+<p>النظام تعرّض لاختراق وأنت محبوس داخل غرفة السايبر. افتح الأبواب العشرة بالإجابة الصحيحة على كل سؤال.</p>
+<p>⏱️ الوقت يحسب تلقائياً، وكل إجابة خاطئة تضيف <b>10 ثواني</b> عقوبة. اللاعب الأسرع يفوز.</p>
+<input id="name" placeholder="اكتب اسمك" maxlength="20">
+<button class="btn" onclick="begin()">ابدأ المهمة</button>
+</div>
+
+<div id="game" class="card hide">
+<div class="hud"><span>الباب <b id="n">1</b>/10</span><span>⏱️ <b id="time">0.0</b></span><span>❌ أخطاء <b id="err">0</b></span></div>
+<div class="doors" id="doors"></div>
+<div class="q" id="q"></div>
+<div id="opts"></div>
+<div class="msg" id="msg"></div>
+</div>
+
+<div id="end" class="card hide">
+<div style="text-align:center;font-size:48px">🏆</div>
+<h1 id="endt">تم الهروب!</h1>
+<div class="big" id="final"></div>
+<div style="text-align:center" id="detail"></div>
+<div class="lb" id="lb"></div>
+<button class="btn" style="margin-top:16px" onclick="reset()">لاعب جديد</button>
+</div>
+</div>
+
+<script>
+const Q=[
+["أي قانون حلّ محل قانون مكافحة التمييز ضد ذوي الإعاقة (DDA)؟",["قانون المساواة (Equality Act 2010)","قانون حماية البيانات","قانون إساءة استخدام الحاسوب","قانون حقوق النشر"]],
+["ما المعايير الدولية التي تدير أمن المعلومات (ISMS)؟",["معايير ISO 27000","معايير ISO 9001","معايير ISO 14001","معايير ISO 45001"]],
+["ما اسم إرشادات رابطة W3C لتسهيل وصول ذوي الإعاقة إلى الويب؟",["WCAG","HTML5","HTTP","CSS"]],
+["ما الخطوة الأولى عند حدوث مشكلة تقنية حسب المخطط؟",["إنشاء تذكرة في مكتب الخدمة","إعادة تثبيت النظام","شراء جهاز جديد","تجاهل المشكلة وانتظار حلها"]],
+["ما الذي يجرّمه قانون إساءة استخدام الحاسوب (Computer Misuse Act)؟",["الدخول غير المصرح به إلى أنظمة الحاسوب","استخدام الحاسوب في الدراسة","شراء برامج مرخصة","تحديث نظام التشغيل"]],
+["ما الهدف الأساسي من لائحة GDPR؟",["حماية البيانات الشخصية للأفراد","زيادة سرعة الإنترنت","تنظيم أسعار الأجهزة","منع استخدام البريد الإلكتروني"]],
+["ما هو هجوم التصيّد (Phishing)؟",["رسائل احتيالية تخدع المستخدم لسرقة معلوماته","تعطّل القرص الصلب","بطء الشبكة بسبب الازدحام","برنامج لتسريع الجهاز"]],
+["ما وظيفة جدار الحماية (Firewall)؟",["مراقبة حركة الشبكة وحجب غير المسموح بها","تخزين الملفات احتياطياً","تسريع تحميل الصفحات","طباعة المستندات"]],
+["لماذا نأخذ نسخة احتياطية (Backup) من البيانات؟",["لاسترجاع البيانات عند فقدانها أو تلفها","لزيادة حجم الذاكرة","لإخفاء الملفات","لتغيير كلمة المرور"]],
+["ما فائدة المصادقة الثنائية (2FA)؟",["إضافة طبقة تحقق ثانية فوق كلمة المرور","جعل كلمة المرور أقصر","حذف الحسابات القديمة","تسريع تسجيل الدخول فقط"]]
+];
+const $=id=>document.getElementById(id);
+let i,t0,timer,errs,pen,name,board=[];
+function shuffle(a){a=a.slice();for(let k=a.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[a[k],a[j]]=[a[j],a[k]]}return a}
+function show(id){["start","game","end"].forEach(x=>$(x).classList.toggle("hide",x!==id))}
+function elapsed(){return (Date.now()-t0)/1000+pen}
+function begin(){
+  name=$("name").value.trim();
+  if(!name){$("name").focus();$("name").placeholder="اكتب اسمك أولاً";return}
+  i=0;errs=0;pen=0;t0=Date.now();
+  $("doors").innerHTML=Q.map((_,k)=>`<div class="door" id="d${k}">🔒</div>`).join("");
+  clearInterval(timer);timer=setInterval(()=>$("time").textContent=elapsed().toFixed(1),100);
+  show("game");render();
+}
+function render(){
+  $("n").textContent=i+1;$("err").textContent=errs;$("msg").textContent="";
+  document.querySelectorAll(".door").forEach((d,k)=>d.classList.toggle("cur",k===i));
+  const [q,o]=Q[i];$("q").textContent=q;
+  $("opts").innerHTML="";
+  shuffle(o.map((t,k)=>({t,ok:k===0}))).forEach(x=>{
+    const b=document.createElement("button");b.className="opt";b.textContent=x.t;
+    b.onclick=()=>pick(b,x.ok);$("opts").appendChild(b);
+  });
+}
+function pick(b,ok){
+  if(ok){
+    document.querySelectorAll(".opt").forEach(x=>x.disabled=true);
+    b.classList.add("ok");$("msg").style.color="var(--g)";$("msg").textContent="✅ صحيح! انفتح الباب";
+    const d=$("d"+i);d.textContent="🔓";d.classList.add("open");
+    setTimeout(()=>{i++;i<Q.length?render():finish()},700);
+  }else{
+    b.classList.add("bad");b.disabled=true;errs++;pen+=10;$("err").textContent=errs;
+    $("msg").style.color="var(--r)";$("msg").textContent="❌ خطأ! +10 ثواني عقوبة";
+  }
+}
+function finish(){
+  clearInterval(timer);const total=elapsed();
+  board.push({name,total,errs});board.sort((a,b)=>a.total-b.total);
+  $("final").textContent=total.toFixed(1)+" ث";
+  $("detail").textContent=`${name}، هربت من الغرفة بـ ${errs} أخطاء (شامل عقوبة ${errs*10} ثانية)`;
+  $("lb").innerHTML="<b>لوحة الصدارة (هذا الجهاز)</b>"+board.slice(0,5).map((p,k)=>`<div><span>${k+1}. ${p.name.replace(/</g,"&lt;")}</span><span>${p.total.toFixed(1)} ث</span></div>`).join("");
+  show("end");
+}
+function reset(){$("name").value="";show("start")}
+</script>
+</body>
+</html>
