@@ -55,7 +55,7 @@ input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);ba
 <button id="snd" onclick="toggleSound()" aria-label="الصوت">🔊</button>
 <div class="wrap">
 <h1>🔐 الهروب من غرفة السايبر</h1>
-<div class="sub">مهمة إنقاذ النظام — 10 أبواب، والوقت يمر!</div>
+<div class="sub">مهمة إنقاذ النظام — 10 أبواب، والوقت يمر! <small style="opacity:.5">v4</small></div>
 
 <div id="start" class="card">
 <p>النظام تعرّض لاختراق وأنت محبوس داخل غرفة السايبر. افتح الأبواب العشرة بالإجابة الصحيحة. أسئلتك تُختار عشوائياً من بنك أكبر.</p>
@@ -137,19 +137,22 @@ function confetti(){cc.width=innerWidth;cc.height=innerHeight;const cl=["#00ff9c
 ps=Array.from({length:150},()=>({x:innerWidth/2,y:innerHeight/2,vx:(Math.random()-.5)*16,vy:-Math.random()*16-4,s:4+Math.random()*6,c:cl[Math.floor(Math.random()*5)],r:Math.random()*6}));
 (function f(){cx.clearRect(0,0,cc.width,cc.height);ps.forEach(p=>{p.vy+=.35;p.x+=p.vx;p.y+=p.vy;p.r+=.2;cx.fillStyle=p.c;cx.save();cx.translate(p.x,p.y);cx.rotate(p.r);cx.fillRect(0,0,p.s,p.s*.6);cx.restore()});ps=ps.filter(p=>p.y<cc.height+20);if(ps.length)requestAnimationFrame(f);else cx.clearRect(0,0,cc.width,cc.height)})()}
 
-/* shared leaderboard (served by server.js; falls back to this device if no server) */
+/* shared leaderboard on Supabase (anon key is public by design; access is limited by RLS policies) */
+const SUPABASE_URL="https://ffvnldgkunwkdrhefwqq.supabase.co";
+const SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmdm5sZGdrdW53a2RyaGVmd3FxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMTI0NTIsImV4cCI6MjEwNjc4ODQ1Mn0.2eYnQbbv9PEbSlTOxExSlJorgObdLASw5v1qPGKs-xE";
+const SB={apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY};
 function drawBoard(list,shared,me){
-  const h=`<b>🏆 لوحة صدارة ${shared?"الصف":"(هذا الجهاز)"}</b>`;
+  const h=`<b>🏆 لوحة صدارة ${shared?"الصف":"(هذا الجهاز فقط — تعذر الاتصال بالخادم)"}</b>`;
   const rows=list.slice(0,10).map((p,k)=>`<div class="${me&&p.name===me.name&&Math.abs(p.total-me.total)<.06?"me":""}"><span>${["🥇","🥈","🥉"][k]||(k+1)+"."} ${esc(p.name)}</span><span>${(+p.total).toFixed(1)} ث · ❌${p.errs}</span></div>`).join("");
   return list.length?h+rows:"";
 }
 async function loadBoard(me){
   let list,shared=true;
-  try{const r=await fetch("/api/scores",{cache:"no-store"});if(!r.ok)throw 0;list=await r.json()}catch(e){list=localBoard;shared=false}
+  try{const r=await fetch(SUPABASE_URL+"/rest/v1/scores?select=name,total,errs&order=total.asc&limit=50",{headers:SB,cache:"no-store"});if(!r.ok)throw new Error(r.status);list=await r.json()}catch(e){console.warn("Supabase:",e);list=localBoard;shared=false}
   const html=drawBoard(list,shared,me);$("lb1").innerHTML=html;$("lb").innerHTML=html;
 }
 async function submit(me){
-  try{await fetch("/api/scores",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(me)})}catch(e){}
+  try{const r=await fetch(SUPABASE_URL+"/rest/v1/scores",{method:"POST",headers:{...SB,"Content-Type":"application/json",Prefer:"return=minimal"},body:JSON.stringify(me)});if(!r.ok)console.warn("Supabase insert:",r.status,await r.text())}catch(e){console.warn(e)}
 }
 setInterval(()=>{if(!$("game").classList.contains("hide"))return;loadBoard()},15000);
 loadBoard();
