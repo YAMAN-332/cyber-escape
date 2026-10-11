@@ -11,15 +11,12 @@ body{margin:0;background:var(--bg);color:var(--t);font-family:Tahoma,"Segoe UI",
 canvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
 #rain{opacity:.35;z-index:0}#conf{z-index:5}
 .wrap{position:relative;z-index:1;max-width:640px;margin:0 auto;padding:18px}
-h1{font-size:26px;margin:8px 0;color:var(--g);text-shadow:0 0 14px #00ff9c88;text-align:center;animation:glow 2.5s infinite alternate}
-@keyframes glow{to{text-shadow:0 0 26px #00ff9c,0 0 4px #fff3}}
+h1{font-size:26px;margin:8px 0;color:var(--g);text-shadow:0 0 14px #00ff9c88;text-align:center}
 .sub{text-align:center;color:var(--c);margin-bottom:18px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:0 0 30px #000a;backdrop-filter:blur(4px);animation:in .4s}
 @keyframes in{from{opacity:0;transform:translateY(14px)}}
-.shake{animation:shake .4s}
-@keyframes shake{25%{transform:translateX(-9px)}50%{transform:translateX(9px)}75%{transform:translateX(-5px)}}
-.flash{animation:flash .5s}
-@keyframes flash{30%{box-shadow:0 0 40px var(--g)}}
+.shake{animation:shake .4s}@keyframes shake{25%{transform:translateX(-9px)}50%{transform:translateX(9px)}75%{transform:translateX(-5px)}}
+.flash{animation:flash .5s}@keyframes flash{30%{box-shadow:0 0 40px var(--g)}}
 button{font:inherit;cursor:pointer}
 .btn{background:var(--g);color:#032;border:0;border-radius:10px;padding:12px 22px;font-weight:bold;font-size:17px;width:100%;transition:.2s}
 .btn:hover{filter:brightness(1.1);transform:translateY(-2px)}
@@ -27,9 +24,9 @@ input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);ba
 .hud{display:flex;justify-content:space-between;gap:8px;font-size:15px;margin-bottom:10px;color:var(--c)}
 .hud b{color:var(--g);font-variant-numeric:tabular-nums}
 .bar{height:6px;background:#06101d;border-radius:4px;overflow:hidden;margin-bottom:12px}
-.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--c),var(--g));transition:width .5s}
+.bar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--r),var(--y),var(--g))}
 .doors{display:flex;gap:5px;margin-bottom:14px}
-.door{flex:1;height:34px;border-radius:6px;border:1px solid var(--line);background:#06101d;display:flex;align-items:center;justify-content:center;font-size:15px;transition:.3s}
+.door{flex:1;height:34px;border-radius:6px;border:1px solid var(--line);background:#06101d;display:flex;align-items:center;justify-content:center;font-size:15px}
 .door.open{background:#00ff9c22;border-color:var(--g);animation:pop .5s}
 @keyframes pop{50%{transform:scale(1.35) rotate(-8deg)}}
 .door.cur{border-color:var(--c);box-shadow:0 0 10px var(--c)}
@@ -40,14 +37,16 @@ input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);ba
 .opt.bad{background:#ff4d6d33;border-color:var(--r)}
 .opt.gone{visibility:hidden}
 .msg{min-height:24px;text-align:center;margin-top:8px;font-weight:bold}
-.row{display:flex;gap:8px;margin-top:10px}
-.mini{flex:1;background:#06101d;color:var(--y);border:1px solid var(--line);border-radius:10px;padding:9px}
+.mini{width:100%;margin-top:10px;background:#06101d;color:var(--y);border:1px solid var(--line);border-radius:10px;padding:9px}
 .mini:disabled{opacity:.4}
-.big{font-size:44px;text-align:center;margin:6px 0;color:var(--g);font-variant-numeric:tabular-nums}
+.big{font-size:44px;text-align:center;margin:6px 0;color:var(--g)}
 .rank{text-align:center;font-size:22px;color:var(--y);margin:6px 0}
 .hide{display:none}
 .lb{margin-top:12px;font-size:15px}
-.lb div{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)}
+.lb div{display:flex;justify-content:space-between;padding:6px 8px;border-bottom:1px solid var(--line)}
+.lb .me{background:#00ff9c22;border-radius:6px}
+.rv{background:#06101d;border-right:3px solid var(--r);border-radius:8px;padding:10px;margin:8px 0;font-size:15px;line-height:1.6}
+.rv span{color:var(--g)}
 #snd{position:fixed;top:10px;left:10px;z-index:9;background:#0b1626;border:1px solid var(--line);color:var(--t);border-radius:50%;width:40px;height:40px}
 </style>
 </head>
@@ -56,23 +55,24 @@ input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);ba
 <button id="snd" onclick="toggleSound()" aria-label="الصوت">🔊</button>
 <div class="wrap">
 <h1>🔐 الهروب من غرفة السايبر</h1>
-<div class="sub">مهمة إنقاذ النظام — 10 أبواب، 10 أسئلة، والوقت يمر!</div>
+<div class="sub">مهمة إنقاذ النظام — 10 أبواب، والوقت يمر!</div>
 
 <div id="start" class="card">
-<p>النظام تعرّض لاختراق وأنت محبوس داخل غرفة السايبر. افتح الأبواب العشرة بالإجابة الصحيحة على كل سؤال.</p>
-<p>⏱️ الوقت يحسب تلقائياً، وكل إجابة خاطئة تضيف <b>10 ثواني</b>.<br>🔥 كل 3 إجابات صحيحة متتالية تخصم <b>3 ثواني</b>.<br>💡 عندك تلميحان فقط (يحذف خيارين، +5 ثواني).</p>
+<p>النظام تعرّض لاختراق وأنت محبوس داخل غرفة السايبر. افتح الأبواب العشرة بالإجابة الصحيحة. أسئلتك تُختار عشوائياً من بنك أكبر.</p>
+<p>⏳ عندك <b>20 ثانية</b> لكل سؤال، وانتهاء الوقت = عقوبة.<br>⏱️ كل إجابة خاطئة تضيف <b>10 ثواني</b>.<br>🔥 كل 3 إجابات صحيحة متتالية تخصم <b>3 ثواني</b>.<br>💡 تلميحان فقط (يحذف خيارين، +5 ثواني).</p>
 <input id="name" placeholder="اكتب اسمك" maxlength="20" autocomplete="off">
 <button class="btn" onclick="begin()">ابدأ المهمة</button>
+<div class="lb" id="lb1"></div>
 </div>
 
 <div id="game" class="card hide">
-<div class="hud"><span>الباب <b id="n">1</b>/10</span><span>⏱️ <b id="time">0.0</b></span><span>❌ <b id="err">0</b></span><span>🔥 <b id="stk">0</b></span></div>
-<div class="bar"><i id="bar"></i></div>
+<div class="hud"><span>الباب <b id="n">1</b>/10</span><span>⏱️ <b id="time">0.0</b></span><span>⏳ <b id="qt">20</b></span><span>❌ <b id="err">0</b></span><span>🔥 <b id="stk">0</b></span></div>
+<div class="bar"><i id="qbar"></i></div>
 <div class="doors" id="doors"></div>
 <div class="q" id="q"></div>
 <div id="opts"></div>
 <div class="msg" id="msg"></div>
-<div class="row"><button class="mini" id="hint" onclick="hint()">💡 تلميح (2)</button></div>
+<button class="mini" id="hint" onclick="hint()">💡 تلميح (2)</button>
 </div>
 
 <div id="end" class="card hide">
@@ -82,6 +82,8 @@ input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);ba
 <div class="big" id="final"></div>
 <div style="text-align:center" id="detail"></div>
 <div class="lb" id="lb"></div>
+<h3 style="color:var(--c)">📋 مراجعة أخطائك</h3>
+<div id="review"></div>
 <button class="btn" style="margin-top:16px" onclick="reset()">لاعب جديد</button>
 </div>
 </div>
@@ -97,10 +99,21 @@ const Q=[
 ["ما هو هجوم التصيّد (Phishing)؟",["رسائل احتيالية تخدع المستخدم لسرقة معلوماته","تعطّل القرص الصلب","بطء الشبكة بسبب الازدحام","برنامج لتسريع الجهاز"]],
 ["ما وظيفة جدار الحماية (Firewall)؟",["مراقبة حركة الشبكة وحجب غير المسموح بها","تخزين الملفات احتياطياً","تسريع تحميل الصفحات","طباعة المستندات"]],
 ["لماذا نأخذ نسخة احتياطية (Backup) من البيانات؟",["لاسترجاع البيانات عند فقدانها أو تلفها","لزيادة حجم الذاكرة","لإخفاء الملفات","لتغيير كلمة المرور"]],
-["ما فائدة المصادقة الثنائية (2FA)؟",["إضافة طبقة تحقق ثانية فوق كلمة المرور","جعل كلمة المرور أقصر","حذف الحسابات القديمة","تسريع تسجيل الدخول فقط"]]
+["ما فائدة المصادقة الثنائية (2FA)؟",["إضافة طبقة تحقق ثانية فوق كلمة المرور","جعل كلمة المرور أقصر","حذف الحسابات القديمة","تسريع تسجيل الدخول فقط"]],
+["ما هو دور مكتب الخدمة (Service Desk)؟",["نقطة الاتصال الأولى لدعم المستخدمين وحل مشاكلهم التقنية","بيع الأجهزة للعملاء","إعداد الرواتب","تصميم الإعلانات"]],
+["أي كلمة مرور هي الأقوى؟",["طويلة وتجمع أحرفاً وأرقاماً ورموزاً","تاريخ ميلادك","اسمك الأول","123456"]],
+["ما هو البرنامج الخبيث (Malware)؟",["برنامج مصمم لإلحاق الضرر بالأجهزة أو سرقة البيانات","برنامج لتحرير الصور","برنامج لمشاهدة الفيديو","برنامج لإرسال البريد"]],
+["ما هو برنامج الفدية (Ransomware)؟",["برنامج يشفّر ملفاتك ويطلب مالاً لفك التشفير","برنامج يسرّع الإنترنت","برنامج يحذف الملفات المكررة","برنامج يحمي من الفيروسات"]],
+["ما هو النص البديل (Alt Text) للصور في الويب؟",["وصف نصي للصورة تقرؤه برامج قراءة الشاشة","اسم صاحب الصورة","حجم الصورة بالبكسل","رابط تحميل الصورة"]],
+["ما المقصود بالتشفير (Encryption)؟",["تحويل البيانات إلى شكل غير مقروء إلا لمن يملك المفتاح","حذف الملفات نهائياً","ضغط الملفات لتصغير حجمها","نسخ الملفات إلى قرص آخر"]],
+["ما هي الهندسة الاجتماعية (Social Engineering)؟",["خداع الأشخاص نفسياً لدفعهم للكشف عن معلومات سرية","تصميم الشبكات الكبيرة","برمجة المواقع الاجتماعية","صيانة أجهزة الحاسوب"]],
+["ما معنى مبدأ أقل صلاحية (Least Privilege)؟",["إعطاء المستخدم الصلاحيات التي يحتاجها لعمله فقط","إعطاء الجميع صلاحية المدير","منع الجميع من استخدام النظام","مشاركة كلمة المرور بين الموظفين"]],
+["ماذا يمثل الثالوث CIA في أمن المعلومات؟",["السرية والسلامة والتوافر","الحاسوب والإنترنت والتطبيقات","التحكم والتحقق والتشغيل","النسخ والتخزين والإرسال"]],
+["ما فائدة التحديث الأمني (Security Patch)؟",["إصلاح ثغرة أمنية معروفة في البرنامج","تغيير شكل البرنامج فقط","حذف بيانات المستخدم","زيادة عدد الإعلانات"]]
 ];
-const $=id=>document.getElementById(id);
-let i,t0,timer,errs,pen,name,streak,hints,board=[],muted=false,ac;
+const N=10,QT=20,$=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let sel,i,t0,qT0,active=false,errs,pen,name,streak,hints,total=0,localBoard=[],muted=false,ac;
 function shuffle(a){a=a.slice();for(let k=a.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[a[k],a[j]]=[a[j],a[k]]}return a}
 function show(id){["start","game","end"].forEach(x=>$(x).classList.toggle("hide",x!==id))}
 function elapsed(){return Math.max(0,(Date.now()-t0)/1000+pen)}
@@ -109,9 +122,7 @@ function fx(el,c){el.classList.remove(c);void el.offsetWidth;el.classList.add(c)
 /* sound */
 function beep(f,d,type,v,w){if(muted)return;try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),g=ac.createGain(),s=ac.currentTime+(w||0);o.type=type||"sine";o.frequency.value=f;g.gain.setValueAtTime(v||.12,s);g.gain.exponentialRampToValueAtTime(.001,s+d);o.connect(g);g.connect(ac.destination);o.start(s);o.stop(s+d)}catch(e){}}
 function toggleSound(){muted=!muted;$("snd").textContent=muted?"🔇":"🔊"}
-const sOk=()=>{beep(660,.12);beep(990,.18,"sine",.12,.1)};
-const sBad=()=>{beep(140,.35,"sawtooth",.1)};
-const sWin=()=>[523,659,784,1046].forEach((f,k)=>beep(f,.25,"triangle",.14,k*.13));
+const sOk=()=>{beep(660,.12);beep(990,.18,"sine",.12,.1)},sBad=()=>beep(140,.35,"sawtooth",.1),sWin=()=>[523,659,784,1046].forEach((f,k)=>beep(f,.25,"triangle",.14,k*.13));
 
 /* matrix rain */
 const rc=$("rain"),rx=rc.getContext("2d");let cols=[];
@@ -126,28 +137,52 @@ function confetti(){cc.width=innerWidth;cc.height=innerHeight;const cl=["#00ff9c
 ps=Array.from({length:150},()=>({x:innerWidth/2,y:innerHeight/2,vx:(Math.random()-.5)*16,vy:-Math.random()*16-4,s:4+Math.random()*6,c:cl[Math.floor(Math.random()*5)],r:Math.random()*6}));
 (function f(){cx.clearRect(0,0,cc.width,cc.height);ps.forEach(p=>{p.vy+=.35;p.x+=p.vx;p.y+=p.vy;p.r+=.2;cx.fillStyle=p.c;cx.save();cx.translate(p.x,p.y);cx.rotate(p.r);cx.fillRect(0,0,p.s,p.s*.6);cx.restore()});ps=ps.filter(p=>p.y<cc.height+20);if(ps.length)requestAnimationFrame(f);else cx.clearRect(0,0,cc.width,cc.height)})()}
 
+/* shared leaderboard (served by server.js; falls back to this device if no server) */
+function drawBoard(list,shared,me){
+  const h=`<b>🏆 لوحة صدارة ${shared?"الصف":"(هذا الجهاز)"}</b>`;
+  const rows=list.slice(0,10).map((p,k)=>`<div class="${me&&p.name===me.name&&Math.abs(p.total-me.total)<.06?"me":""}"><span>${["🥇","🥈","🥉"][k]||(k+1)+"."} ${esc(p.name)}</span><span>${(+p.total).toFixed(1)} ث · ❌${p.errs}</span></div>`).join("");
+  return list.length?h+rows:"";
+}
+async function loadBoard(me){
+  let list,shared=true;
+  try{const r=await fetch("/api/scores",{cache:"no-store"});if(!r.ok)throw 0;list=await r.json()}catch(e){list=localBoard;shared=false}
+  const html=drawBoard(list,shared,me);$("lb1").innerHTML=html;$("lb").innerHTML=html;
+}
+async function submit(me){
+  try{await fetch("/api/scores",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(me)})}catch(e){}
+}
+setInterval(()=>{if(!$("game").classList.contains("hide"))return;loadBoard()},15000);
+loadBoard();
+
 /* game */
 function begin(){
   name=$("name").value.trim();
   if(!name){$("name").focus();$("name").placeholder="اكتب اسمك أولاً";return}
+  sel=shuffle(Q).slice(0,N).map(([q,o])=>({q,o,missed:false}));
   i=0;errs=0;pen=0;streak=0;hints=2;t0=Date.now();
-  $("doors").innerHTML=Q.map((_,k)=>`<div class="door" id="d${k}">🔒</div>`).join("");
-  clearInterval(timer);timer=setInterval(()=>$("time").textContent=elapsed().toFixed(1),100);
+  $("doors").innerHTML=sel.map((_,k)=>`<div class="door" id="d${k}">🔒</div>`).join("");
   show("game");render();
 }
+setInterval(()=>{
+  if($("game").classList.contains("hide"))return;
+  $("time").textContent=elapsed().toFixed(1);
+  if(active){const left=Math.max(0,QT-(Date.now()-qT0)/1000);$("qt").textContent=Math.ceil(left);$("qbar").style.width=left/QT*100+"%";if(left<=0)timeout()}
+},100);
 function render(){
+  const cur=sel[i];qT0=Date.now();active=true;
   $("n").textContent=i+1;$("err").textContent=errs;$("stk").textContent=streak;$("msg").textContent="";
-  $("bar").style.width=(i/Q.length*100)+"%";
   $("hint").textContent=`💡 تلميح (${hints})`;$("hint").disabled=hints<1;
   document.querySelectorAll(".door").forEach((d,k)=>d.classList.toggle("cur",k===i));
-  const [q,o]=Q[i];$("q").textContent=q;$("opts").innerHTML="";
-  shuffle(o.map((t,k)=>({t,ok:k===0}))).forEach((x,k)=>{
+  $("q").textContent=cur.q;$("opts").innerHTML="";
+  shuffle(cur.o.map((t,k)=>({t,ok:k===0}))).forEach((x,k)=>{
     const b=document.createElement("button");b.className="opt";b.textContent=x.t;b.dataset.ok=x.ok?1:0;
     b.style.animationDelay=k*.07+"s";b.onclick=()=>pick(b,x.ok);$("opts").appendChild(b);
   });
 }
+function lock(){document.querySelectorAll(".opt").forEach(x=>x.disabled=true);$("hint").disabled=true}
+function next(){i++;i<N?render():finish()}
 function hint(){
-  if(hints<1)return;
+  if(hints<1||!active)return;
   const w=[...document.querySelectorAll(".opt")].filter(b=>b.dataset.ok==="0"&&!b.disabled);
   if(w.length<2)return;
   shuffle(w).slice(0,2).forEach(b=>{b.disabled=true;b.classList.add("gone")});
@@ -155,32 +190,40 @@ function hint(){
   $("msg").style.color="var(--y)";$("msg").textContent="💡 حُذف خيارين (+5 ثواني)";beep(440,.1);
 }
 function pick(b,ok){
-  const card=$("game");
+  if(!active)return;
   if(ok){
-    document.querySelectorAll(".opt").forEach(x=>x.disabled=true);$("hint").disabled=true;
-    b.classList.add("ok");fx(card,"flash");sOk();
+    active=false;lock();b.classList.add("ok");fx($("game"),"flash");sOk();
     streak++;let m="✅ صحيح! انفتح الباب";
     if(streak%3===0){pen-=3;m+=" — 🔥 سلسلة! -3 ثواني"}
     $("stk").textContent=streak;$("msg").style.color="var(--g)";$("msg").textContent=m;
     const d=$("d"+i);d.textContent="🔓";d.classList.add("open");
-    $("bar").style.width=((i+1)/Q.length*100)+"%";
-    setTimeout(()=>{i++;i<Q.length?render():finish()},900);
+    setTimeout(next,900);
   }else{
-    b.classList.add("bad");b.disabled=true;errs++;streak=0;pen+=10;sBad();fx(card,"shake");
+    b.classList.add("bad");b.disabled=true;errs++;streak=0;pen+=10;sel[i].missed=true;sBad();fx($("game"),"shake");
     $("err").textContent=errs;$("stk").textContent=0;
     $("msg").style.color="var(--r)";$("msg").textContent="❌ خطأ! +10 ثواني عقوبة";
   }
 }
-function finish(){
-  clearInterval(timer);const total=elapsed();
-  board.push({name,total,errs});board.sort((a,b)=>a.total-b.total);
-  const rank=total<60?"👑 هاكر أسطوري":total<100?"🥷 خبير سايبر":total<160?"💻 محترف":"🔰 مبتدئ واعد";
-  $("rank").textContent=rank;$("final").textContent=total.toFixed(1)+" ث";
-  $("detail").textContent=`${name}، هربت من الغرفة بـ ${errs} أخطاء`;
-  $("lb").innerHTML="<b>لوحة الصدارة (هذا الجهاز)</b>"+board.slice(0,5).map((p,k)=>`<div><span>${["🥇","🥈","🥉"][k]||k+1+"."} ${p.name.replace(/</g,"&lt;")}</span><span>${p.total.toFixed(1)} ث</span></div>`).join("");
-  show("end");sWin();confetti();
+function timeout(){
+  active=false;lock();errs++;streak=0;pen+=10;sel[i].missed=true;sBad();fx($("game"),"shake");
+  document.querySelectorAll(".opt").forEach(x=>{if(x.dataset.ok==="1")x.classList.add("ok")});
+  $("err").textContent=errs;$("stk").textContent=0;$("d"+i).textContent="⏰";
+  $("msg").style.color="var(--r)";$("msg").textContent="⏰ انتهى الوقت! +10 ثواني";
+  setTimeout(next,1600);
 }
-function reset(){$("name").value="";show("start")}
+async function finish(){
+  active=false;total=elapsed();const t=Math.round(total*10)/10;
+  const rank=total<90?"👑 هاكر أسطوري":total<140?"🥷 خبير سايبر":total<200?"💻 محترف":"🔰 مبتدئ واعد";
+  $("rank").textContent=rank;$("final").textContent=t.toFixed(1)+" ث";
+  $("detail").textContent=`${name}، هربت من الغرفة بـ ${errs} أخطاء`;
+  const miss=sel.filter(s=>s.missed);
+  $("review").innerHTML=miss.length?miss.map(s=>`<div class="rv">${esc(s.q)}<br>✅ <span>${esc(s.o[0])}</span></div>`).join(""):"<div class='rv' style='border-color:var(--g)'>🎉 ما غلطت بأي سؤال!</div>";
+  const me={name,total:t,errs};
+  localBoard.push(me);localBoard.sort((a,b)=>a.total-b.total);
+  show("end");sWin();confetti();
+  await submit(me);loadBoard(me);
+}
+function reset(){$("name").value="";show("start");loadBoard()}
 </script>
 </body>
 </html>
