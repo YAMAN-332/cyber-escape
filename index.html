@@ -5,60 +5,80 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>الهروب من غرفة السايبر</title>
 <style>
-:root{--bg:#050b14;--panel:#0b1626;--line:#12304d;--g:#00ff9c;--c:#27d3ff;--r:#ff4d6d;--t:#d8ecff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#050b14}}
+:root{--bg:#050b14;--panel:#0b1626ee;--line:#12304d;--g:#00ff9c;--c:#27d3ff;--r:#ff4d6d;--y:#ffd24d;--t:#d8ecff}
 *{box-sizing:border-box}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
-body{margin:0;background:radial-gradient(ellipse at top,#0a2038,var(--bg) 60%);color:var(--t);font-family:Tahoma,"Segoe UI",Arial,sans-serif;min-height:100vh}
-.wrap{max-width:640px;margin:0 auto;padding:18px}
-h1{font-size:26px;margin:8px 0;color:var(--g);text-shadow:0 0 14px #00ff9c88;text-align:center}
+body{margin:0;background:var(--bg);color:var(--t);font-family:Tahoma,"Segoe UI",Arial,sans-serif;min-height:100vh}
+canvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
+#rain{opacity:.35;z-index:0}#conf{z-index:5}
+.wrap{position:relative;z-index:1;max-width:640px;margin:0 auto;padding:18px}
+h1{font-size:26px;margin:8px 0;color:var(--g);text-shadow:0 0 14px #00ff9c88;text-align:center;animation:glow 2.5s infinite alternate}
+@keyframes glow{to{text-shadow:0 0 26px #00ff9c,0 0 4px #fff3}}
 .sub{text-align:center;color:var(--c);margin-bottom:18px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:0 0 24px #00000066}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:0 0 30px #000a;backdrop-filter:blur(4px);animation:in .4s}
+@keyframes in{from{opacity:0;transform:translateY(14px)}}
+.shake{animation:shake .4s}
+@keyframes shake{25%{transform:translateX(-9px)}50%{transform:translateX(9px)}75%{transform:translateX(-5px)}}
+.flash{animation:flash .5s}
+@keyframes flash{30%{box-shadow:0 0 40px var(--g)}}
 button{font:inherit;cursor:pointer}
-.btn{background:var(--g);color:#032;border:0;border-radius:10px;padding:12px 22px;font-weight:bold;font-size:17px;width:100%}
-.btn:hover{filter:brightness(1.1)}
+.btn{background:var(--g);color:#032;border:0;border-radius:10px;padding:12px 22px;font-weight:bold;font-size:17px;width:100%;transition:.2s}
+.btn:hover{filter:brightness(1.1);transform:translateY(-2px)}
 input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:#06101d;color:var(--t);font:inherit;margin:10px 0}
-.hud{display:flex;justify-content:space-between;gap:8px;font-size:15px;margin-bottom:12px;color:var(--c)}
+.hud{display:flex;justify-content:space-between;gap:8px;font-size:15px;margin-bottom:10px;color:var(--c)}
 .hud b{color:var(--g);font-variant-numeric:tabular-nums}
+.bar{height:6px;background:#06101d;border-radius:4px;overflow:hidden;margin-bottom:12px}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--c),var(--g));transition:width .5s}
 .doors{display:flex;gap:5px;margin-bottom:14px}
-.door{flex:1;height:34px;border-radius:6px;border:1px solid var(--line);background:#06101d;display:flex;align-items:center;justify-content:center;font-size:15px}
-.door.open{background:#00ff9c22;border-color:var(--g)}
+.door{flex:1;height:34px;border-radius:6px;border:1px solid var(--line);background:#06101d;display:flex;align-items:center;justify-content:center;font-size:15px;transition:.3s}
+.door.open{background:#00ff9c22;border-color:var(--g);animation:pop .5s}
+@keyframes pop{50%{transform:scale(1.35) rotate(-8deg)}}
 .door.cur{border-color:var(--c);box-shadow:0 0 10px var(--c)}
 .q{font-size:20px;line-height:1.7;margin:6px 0 14px}
-.opt{display:block;width:100%;text-align:right;background:#06101d;color:var(--t);border:1px solid var(--line);border-radius:10px;padding:13px;margin:8px 0;font-size:17px}
-.opt:hover{border-color:var(--c)}
+.opt{display:block;width:100%;text-align:right;background:#06101d;color:var(--t);border:1px solid var(--line);border-radius:10px;padding:13px;margin:8px 0;font-size:17px;transition:.2s;animation:in .3s backwards}
+.opt:hover:not(:disabled){border-color:var(--c);transform:translateX(-4px)}
 .opt.ok{background:#00ff9c33;border-color:var(--g)}
 .opt.bad{background:#ff4d6d33;border-color:var(--r)}
+.opt.gone{visibility:hidden}
 .msg{min-height:24px;text-align:center;margin-top:8px;font-weight:bold}
+.row{display:flex;gap:8px;margin-top:10px}
+.mini{flex:1;background:#06101d;color:var(--y);border:1px solid var(--line);border-radius:10px;padding:9px}
+.mini:disabled{opacity:.4}
 .big{font-size:44px;text-align:center;margin:6px 0;color:var(--g);font-variant-numeric:tabular-nums}
+.rank{text-align:center;font-size:22px;color:var(--y);margin:6px 0}
 .hide{display:none}
 .lb{margin-top:12px;font-size:15px}
 .lb div{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)}
+#snd{position:fixed;top:10px;left:10px;z-index:9;background:#0b1626;border:1px solid var(--line);color:var(--t);border-radius:50%;width:40px;height:40px}
 </style>
 </head>
 <body>
+<canvas id="rain"></canvas><canvas id="conf"></canvas>
+<button id="snd" onclick="toggleSound()" aria-label="الصوت">🔊</button>
 <div class="wrap">
 <h1>🔐 الهروب من غرفة السايبر</h1>
 <div class="sub">مهمة إنقاذ النظام — 10 أبواب، 10 أسئلة، والوقت يمر!</div>
 
 <div id="start" class="card">
 <p>النظام تعرّض لاختراق وأنت محبوس داخل غرفة السايبر. افتح الأبواب العشرة بالإجابة الصحيحة على كل سؤال.</p>
-<p>⏱️ الوقت يحسب تلقائياً، وكل إجابة خاطئة تضيف <b>10 ثواني</b> عقوبة. اللاعب الأسرع يفوز.</p>
-<input id="name" placeholder="اكتب اسمك" maxlength="20">
+<p>⏱️ الوقت يحسب تلقائياً، وكل إجابة خاطئة تضيف <b>10 ثواني</b>.<br>🔥 كل 3 إجابات صحيحة متتالية تخصم <b>3 ثواني</b>.<br>💡 عندك تلميحان فقط (يحذف خيارين، +5 ثواني).</p>
+<input id="name" placeholder="اكتب اسمك" maxlength="20" autocomplete="off">
 <button class="btn" onclick="begin()">ابدأ المهمة</button>
 </div>
 
 <div id="game" class="card hide">
-<div class="hud"><span>الباب <b id="n">1</b>/10</span><span>⏱️ <b id="time">0.0</b></span><span>❌ أخطاء <b id="err">0</b></span></div>
+<div class="hud"><span>الباب <b id="n">1</b>/10</span><span>⏱️ <b id="time">0.0</b></span><span>❌ <b id="err">0</b></span><span>🔥 <b id="stk">0</b></span></div>
+<div class="bar"><i id="bar"></i></div>
 <div class="doors" id="doors"></div>
 <div class="q" id="q"></div>
 <div id="opts"></div>
 <div class="msg" id="msg"></div>
+<div class="row"><button class="mini" id="hint" onclick="hint()">💡 تلميح (2)</button></div>
 </div>
 
 <div id="end" class="card hide">
 <div style="text-align:center;font-size:48px">🏆</div>
-<h1 id="endt">تم الهروب!</h1>
+<h1>تم الهروب!</h1>
+<div class="rank" id="rank"></div>
 <div class="big" id="final"></div>
 <div style="text-align:center" id="detail"></div>
 <div class="lb" id="lb"></div>
@@ -80,46 +100,85 @@ const Q=[
 ["ما فائدة المصادقة الثنائية (2FA)؟",["إضافة طبقة تحقق ثانية فوق كلمة المرور","جعل كلمة المرور أقصر","حذف الحسابات القديمة","تسريع تسجيل الدخول فقط"]]
 ];
 const $=id=>document.getElementById(id);
-let i,t0,timer,errs,pen,name,board=[];
+let i,t0,timer,errs,pen,name,streak,hints,board=[],muted=false,ac;
 function shuffle(a){a=a.slice();for(let k=a.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[a[k],a[j]]=[a[j],a[k]]}return a}
 function show(id){["start","game","end"].forEach(x=>$(x).classList.toggle("hide",x!==id))}
-function elapsed(){return (Date.now()-t0)/1000+pen}
+function elapsed(){return Math.max(0,(Date.now()-t0)/1000+pen)}
+function fx(el,c){el.classList.remove(c);void el.offsetWidth;el.classList.add(c)}
+
+/* sound */
+function beep(f,d,type,v,w){if(muted)return;try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),g=ac.createGain(),s=ac.currentTime+(w||0);o.type=type||"sine";o.frequency.value=f;g.gain.setValueAtTime(v||.12,s);g.gain.exponentialRampToValueAtTime(.001,s+d);o.connect(g);g.connect(ac.destination);o.start(s);o.stop(s+d)}catch(e){}}
+function toggleSound(){muted=!muted;$("snd").textContent=muted?"🔇":"🔊"}
+const sOk=()=>{beep(660,.12);beep(990,.18,"sine",.12,.1)};
+const sBad=()=>{beep(140,.35,"sawtooth",.1)};
+const sWin=()=>[523,659,784,1046].forEach((f,k)=>beep(f,.25,"triangle",.14,k*.13));
+
+/* matrix rain */
+const rc=$("rain"),rx=rc.getContext("2d");let cols=[];
+function sizeRain(){rc.width=innerWidth;rc.height=innerHeight;cols=Array(Math.ceil(innerWidth/16)).fill(0).map(()=>Math.random()*innerHeight/16)}
+sizeRain();addEventListener("resize",sizeRain);
+setInterval(()=>{rx.fillStyle="rgba(5,11,20,.12)";rx.fillRect(0,0,rc.width,rc.height);rx.fillStyle="#00ff9c";rx.font="14px monospace";
+cols.forEach((y,k)=>{rx.fillText("01<>/{}"[Math.floor(Math.random()*7)],k*16,y*16);cols[k]=y*16>rc.height&&Math.random()>.975?0:y+1})},60);
+
+/* confetti */
+const cc=$("conf"),cx=cc.getContext("2d");let ps=[];
+function confetti(){cc.width=innerWidth;cc.height=innerHeight;const cl=["#00ff9c","#27d3ff","#ffd24d","#ff4d6d","#fff"];
+ps=Array.from({length:150},()=>({x:innerWidth/2,y:innerHeight/2,vx:(Math.random()-.5)*16,vy:-Math.random()*16-4,s:4+Math.random()*6,c:cl[Math.floor(Math.random()*5)],r:Math.random()*6}));
+(function f(){cx.clearRect(0,0,cc.width,cc.height);ps.forEach(p=>{p.vy+=.35;p.x+=p.vx;p.y+=p.vy;p.r+=.2;cx.fillStyle=p.c;cx.save();cx.translate(p.x,p.y);cx.rotate(p.r);cx.fillRect(0,0,p.s,p.s*.6);cx.restore()});ps=ps.filter(p=>p.y<cc.height+20);if(ps.length)requestAnimationFrame(f);else cx.clearRect(0,0,cc.width,cc.height)})()}
+
+/* game */
 function begin(){
   name=$("name").value.trim();
   if(!name){$("name").focus();$("name").placeholder="اكتب اسمك أولاً";return}
-  i=0;errs=0;pen=0;t0=Date.now();
+  i=0;errs=0;pen=0;streak=0;hints=2;t0=Date.now();
   $("doors").innerHTML=Q.map((_,k)=>`<div class="door" id="d${k}">🔒</div>`).join("");
   clearInterval(timer);timer=setInterval(()=>$("time").textContent=elapsed().toFixed(1),100);
   show("game");render();
 }
 function render(){
-  $("n").textContent=i+1;$("err").textContent=errs;$("msg").textContent="";
+  $("n").textContent=i+1;$("err").textContent=errs;$("stk").textContent=streak;$("msg").textContent="";
+  $("bar").style.width=(i/Q.length*100)+"%";
+  $("hint").textContent=`💡 تلميح (${hints})`;$("hint").disabled=hints<1;
   document.querySelectorAll(".door").forEach((d,k)=>d.classList.toggle("cur",k===i));
-  const [q,o]=Q[i];$("q").textContent=q;
-  $("opts").innerHTML="";
-  shuffle(o.map((t,k)=>({t,ok:k===0}))).forEach(x=>{
-    const b=document.createElement("button");b.className="opt";b.textContent=x.t;
-    b.onclick=()=>pick(b,x.ok);$("opts").appendChild(b);
+  const [q,o]=Q[i];$("q").textContent=q;$("opts").innerHTML="";
+  shuffle(o.map((t,k)=>({t,ok:k===0}))).forEach((x,k)=>{
+    const b=document.createElement("button");b.className="opt";b.textContent=x.t;b.dataset.ok=x.ok?1:0;
+    b.style.animationDelay=k*.07+"s";b.onclick=()=>pick(b,x.ok);$("opts").appendChild(b);
   });
 }
+function hint(){
+  if(hints<1)return;
+  const w=[...document.querySelectorAll(".opt")].filter(b=>b.dataset.ok==="0"&&!b.disabled);
+  if(w.length<2)return;
+  shuffle(w).slice(0,2).forEach(b=>{b.disabled=true;b.classList.add("gone")});
+  hints--;pen+=5;$("hint").textContent=`💡 تلميح (${hints})`;$("hint").disabled=hints<1;
+  $("msg").style.color="var(--y)";$("msg").textContent="💡 حُذف خيارين (+5 ثواني)";beep(440,.1);
+}
 function pick(b,ok){
+  const card=$("game");
   if(ok){
-    document.querySelectorAll(".opt").forEach(x=>x.disabled=true);
-    b.classList.add("ok");$("msg").style.color="var(--g)";$("msg").textContent="✅ صحيح! انفتح الباب";
+    document.querySelectorAll(".opt").forEach(x=>x.disabled=true);$("hint").disabled=true;
+    b.classList.add("ok");fx(card,"flash");sOk();
+    streak++;let m="✅ صحيح! انفتح الباب";
+    if(streak%3===0){pen-=3;m+=" — 🔥 سلسلة! -3 ثواني"}
+    $("stk").textContent=streak;$("msg").style.color="var(--g)";$("msg").textContent=m;
     const d=$("d"+i);d.textContent="🔓";d.classList.add("open");
-    setTimeout(()=>{i++;i<Q.length?render():finish()},700);
+    $("bar").style.width=((i+1)/Q.length*100)+"%";
+    setTimeout(()=>{i++;i<Q.length?render():finish()},900);
   }else{
-    b.classList.add("bad");b.disabled=true;errs++;pen+=10;$("err").textContent=errs;
+    b.classList.add("bad");b.disabled=true;errs++;streak=0;pen+=10;sBad();fx(card,"shake");
+    $("err").textContent=errs;$("stk").textContent=0;
     $("msg").style.color="var(--r)";$("msg").textContent="❌ خطأ! +10 ثواني عقوبة";
   }
 }
 function finish(){
   clearInterval(timer);const total=elapsed();
   board.push({name,total,errs});board.sort((a,b)=>a.total-b.total);
-  $("final").textContent=total.toFixed(1)+" ث";
-  $("detail").textContent=`${name}، هربت من الغرفة بـ ${errs} أخطاء (شامل عقوبة ${errs*10} ثانية)`;
-  $("lb").innerHTML="<b>لوحة الصدارة (هذا الجهاز)</b>"+board.slice(0,5).map((p,k)=>`<div><span>${k+1}. ${p.name.replace(/</g,"&lt;")}</span><span>${p.total.toFixed(1)} ث</span></div>`).join("");
-  show("end");
+  const rank=total<60?"👑 هاكر أسطوري":total<100?"🥷 خبير سايبر":total<160?"💻 محترف":"🔰 مبتدئ واعد";
+  $("rank").textContent=rank;$("final").textContent=total.toFixed(1)+" ث";
+  $("detail").textContent=`${name}، هربت من الغرفة بـ ${errs} أخطاء`;
+  $("lb").innerHTML="<b>لوحة الصدارة (هذا الجهاز)</b>"+board.slice(0,5).map((p,k)=>`<div><span>${["🥇","🥈","🥉"][k]||k+1+"."} ${p.name.replace(/</g,"&lt;")}</span><span>${p.total.toFixed(1)} ث</span></div>`).join("");
+  show("end");sWin();confetti();
 }
 function reset(){$("name").value="";show("start")}
 </script>
