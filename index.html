@@ -55,18 +55,19 @@ input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);ba
 <button id="snd" onclick="toggleSound()" aria-label="الصوت">🔊</button>
 <div class="wrap">
 <h1>🔐 الهروب من غرفة السايبر</h1>
-<div class="sub">مهمة إنقاذ النظام — 10 أبواب، والوقت يمر! <small style="opacity:.5">v4</small></div>
+<div class="sub">مهمة إنقاذ النظام — والوقت يمر! <small style="opacity:.5">v6</small></div>
 
 <div id="start" class="card">
-<p>النظام تعرّض لاختراق وأنت محبوس داخل غرفة السايبر. افتح الأبواب العشرة بالإجابة الصحيحة. أسئلتك تُختار عشوائياً من بنك أكبر.</p>
-<p>⏳ عندك <b>20 ثانية</b> لكل سؤال، وانتهاء الوقت = عقوبة.<br>⏱️ كل إجابة خاطئة تضيف <b>10 ثواني</b>.<br>🔥 كل 3 إجابات صحيحة متتالية تخصم <b>3 ثواني</b>.<br>💡 تلميحان فقط (يحذف خيارين، +5 ثواني).</p>
+<p>النظام تعرّض لاختراق وأنت محبوس داخل غرفة السايبر. افتح الأبواب بالإجابة الصحيحة. أسئلتك تُختار عشوائياً من بنك أكبر.</p>
+<p id="rules"></p><div class="msg" id="notice" style="color:var(--y)"></div>
 <input id="name" placeholder="اكتب اسمك" maxlength="20" autocomplete="off">
-<button class="btn" onclick="begin()">ابدأ المهمة</button>
+<input id="pin" class="hide" placeholder="🔑 رمز الدخول" maxlength="12" autocomplete="off">
+<button class="btn" id="go" onclick="begin()">ابدأ المهمة</button>
 <div class="lb" id="lb1"></div>
 </div>
 
 <div id="game" class="card hide">
-<div class="hud"><span>الباب <b id="n">1</b>/10</span><span>⏱️ <b id="time">0.0</b></span><span>⏳ <b id="qt">20</b></span><span>❌ <b id="err">0</b></span><span>🔥 <b id="stk">0</b></span></div>
+<div class="hud"><span>الباب <b id="n">1</b>/<span id="nn">10</span></span><span>⏱️ <b id="time">0.0</b></span><span>⏳ <b id="qt">20</b></span><span>❌ <b id="err">0</b></span><span>🔥 <b id="stk">0</b></span></div>
 <div class="bar"><i id="qbar"></i></div>
 <div class="doors" id="doors"></div>
 <div class="q" id="q"></div>
@@ -89,7 +90,7 @@ input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);ba
 </div>
 
 <script>
-const Q=[
+let Q=[
 ["أي قانون حلّ محل قانون مكافحة التمييز ضد ذوي الإعاقة (DDA)؟",["قانون المساواة (Equality Act 2010)","قانون حماية البيانات","قانون إساءة استخدام الحاسوب","قانون حقوق النشر"]],
 ["ما المعايير الدولية التي تدير أمن المعلومات (ISMS)؟",["معايير ISO 27000","معايير ISO 9001","معايير ISO 14001","معايير ISO 45001"]],
 ["ما اسم إرشادات رابطة W3C لتسهيل وصول ذوي الإعاقة إلى الويب؟",["WCAG","HTML5","HTTP","CSS"]],
@@ -111,7 +112,7 @@ const Q=[
 ["ماذا يمثل الثالوث CIA في أمن المعلومات؟",["السرية والسلامة والتوافر","الحاسوب والإنترنت والتطبيقات","التحكم والتحقق والتشغيل","النسخ والتخزين والإرسال"]],
 ["ما فائدة التحديث الأمني (Security Patch)؟",["إصلاح ثغرة أمنية معروفة في البرنامج","تغيير شكل البرنامج فقط","حذف بيانات المستخدم","زيادة عدد الإعلانات"]]
 ];
-const N=10,QT=20,$=id=>document.getElementById(id);
+let N=10,QT=20,PEN_W=10,PEN_T=10,HINTS=2,OPEN=true,SHOWLB=true,ANN="",SESSION=null,PINREQ=false;const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let sel,i,t0,qT0,active=false,errs,pen,name,streak,hints,total=0,localBoard=[],muted=false,ac;
 function shuffle(a){a=a.slice();for(let k=a.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[a[k],a[j]]=[a[j],a[k]]}return a}
@@ -142,27 +143,54 @@ const SUPABASE_URL="https://ffvnldgkunwkdrhefwqq.supabase.co";
 const SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmdm5sZGdrdW53a2RyaGVmd3FxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMTI0NTIsImV4cCI6MjEwNjc4ODQ1Mn0.2eYnQbbv9PEbSlTOxExSlJorgObdLASw5v1qPGKs-xE";
 const SB={apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY};
 function drawBoard(list,shared,me){
+  if(!SHOWLB)return "<b>🔒 ستظهر النتائج لاحقاً</b>";
   const h=`<b>🏆 لوحة صدارة ${shared?"الصف":"(هذا الجهاز فقط — تعذر الاتصال بالخادم)"}</b>`;
   const rows=list.slice(0,10).map((p,k)=>`<div class="${me&&p.name===me.name&&Math.abs(p.total-me.total)<.06?"me":""}"><span>${["🥇","🥈","🥉"][k]||(k+1)+"."} ${esc(p.name)}</span><span>${(+p.total).toFixed(1)} ث · ❌${p.errs}</span></div>`).join("");
   return list.length?h+rows:"";
 }
 async function loadBoard(me){
   let list,shared=true;
-  try{const r=await fetch(SUPABASE_URL+"/rest/v1/scores?select=name,total,errs&order=total.asc&limit=50",{headers:SB,cache:"no-store"});if(!r.ok)throw new Error(r.status);list=await r.json()}catch(e){console.warn("Supabase:",e);list=localBoard;shared=false}
+  if(!SESSION){$("lb1").innerHTML=$("lb").innerHTML="";return}
+  try{const r=await fetch(SUPABASE_URL+"/rest/v1/scores?select=name,total,errs&session_id=eq."+SESSION+"&order=total.asc&limit=50",{headers:SB,cache:"no-store"});if(!r.ok)throw new Error(r.status);list=await r.json()}catch(e){console.warn("Supabase:",e);list=localBoard;shared=false}
   const html=drawBoard(list,shared,me);$("lb1").innerHTML=html;$("lb").innerHTML=html;
 }
 async function submit(me){
-  try{const r=await fetch(SUPABASE_URL+"/rest/v1/scores",{method:"POST",headers:{...SB,"Content-Type":"application/json",Prefer:"return=minimal"},body:JSON.stringify(me)});if(!r.ok)console.warn("Supabase insert:",r.status,await r.text())}catch(e){console.warn(e)}
+  try{const r=await fetch(SUPABASE_URL+"/rest/v1/scores",{method:"POST",headers:{...SB,"Content-Type":"application/json",Prefer:"return=minimal"},body:JSON.stringify({...me,session_id:SESSION})});if(!r.ok){console.warn("Supabase insert:",r.status,await r.text());return false}return true}catch(e){console.warn(e);return false}
 }
-setInterval(()=>{if(!$("game").classList.contains("hide"))return;loadBoard()},15000);
-loadBoard();
+async function rpc(fn,body){const r=await fetch(SUPABASE_URL+"/rest/v1/rpc/"+fn,{method:"POST",headers:{...SB,"Content-Type":"application/json"},body:JSON.stringify(body)});if(!r.ok)throw new Error(r.status);return r.json()}
+function applyConfig(){
+  $("rules").innerHTML=`⏳ عندك <b>${QT} ثانية</b> لكل سؤال، وانتهاء الوقت = عقوبة ${PEN_T} ثواني.<br>⏱️ كل إجابة خاطئة تضيف <b>${PEN_W} ثواني</b>.<br>🔥 كل 3 إجابات صحيحة متتالية تخصم <b>3 ثواني</b>.<br>${HINTS?`💡 عندك ${HINTS} تلميح (يحذف خيارين، +5 ثواني).`:"🚫 لا توجد تلميحات في هذه الجولة."}`;
+  $("nn").textContent=N;
+  $("notice").textContent=!OPEN?"🔒 اللعبة مغلقة حالياً، انتظر إشارة المعلم":(!SESSION?"⚠️ لا توجد جولة نشطة":ANN);
+  $("go").disabled=!OPEN||!SESSION;$("pin").classList.toggle("hide",!PINREQ);
+}
+async function loadConfig(){
+  try{
+    const g=u=>fetch(SUPABASE_URL+"/rest/v1/"+u,{headers:SB,cache:"no-store"}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()});
+    const [[s],[ss],qs,pr]=await Promise.all([g("settings?id=eq.1&select=*"),g("sessions?active=eq.true&select=id,name&limit=1"),g("questions?active=eq.true&select=q,correct,w1,w2,w3").catch(()=>[]),rpc("pin_required",{}).catch(()=>false)]);
+    if(qs.length)Q=qs.map(x=>[x.q,[x.correct,x.w1,x.w2,x.w3]]);
+    PINREQ=pr===true;
+    if(s){QT=s.question_time;N=Math.min(s.num_questions,Q.length);PEN_W=s.wrong_penalty;PEN_T=s.timeout_penalty;HINTS=s.hints;OPEN=s.game_open;SHOWLB=s.show_leaderboard;ANN=s.announcement||""}
+    N=Math.min(N,Q.length);SESSION=ss?ss.id:null;
+  }catch(e){console.warn("config:",e)}
+  applyConfig();
+}
+setInterval(async()=>{if(!$("game").classList.contains("hide"))return;await loadConfig();loadBoard()},15000);
+loadConfig().then(()=>loadBoard());
 
 /* game */
-function begin(){
+async function begin(){
+  if(!OPEN||!SESSION)return;
   name=$("name").value.trim();
   if(!name){$("name").focus();$("name").placeholder="اكتب اسمك أولاً";return}
+  name=name.replace(/\s+/g," ");$("go").disabled=true;
+  try{
+    if(PINREQ&&!(await rpc("check_pin",{p:$("pin").value.trim()}))){$("notice").textContent="❌ رمز الدخول غير صحيح";return}
+    if(await rpc("name_taken",{n:name}).catch(()=>false)){$("notice").textContent="⚠️ هذا الاسم مستخدم في هذه الجولة، أضف حرفاً أو رقماً";return}
+  }catch(e){$("notice").textContent="⚠️ تعذر الاتصال، حاول مرة أخرى";return}
+  finally{$("go").disabled=false}
   sel=shuffle(Q).slice(0,N).map(([q,o])=>({q,o,missed:false}));
-  i=0;errs=0;pen=0;streak=0;hints=2;t0=Date.now();
+  i=0;errs=0;pen=0;streak=0;hints=HINTS;t0=Date.now();
   $("doors").innerHTML=sel.map((_,k)=>`<div class="door" id="d${k}">🔒</div>`).join("");
   show("game");render();
 }
@@ -202,16 +230,16 @@ function pick(b,ok){
     const d=$("d"+i);d.textContent="🔓";d.classList.add("open");
     setTimeout(next,900);
   }else{
-    b.classList.add("bad");b.disabled=true;errs++;streak=0;pen+=10;sel[i].missed=true;sBad();fx($("game"),"shake");
+    b.classList.add("bad");b.disabled=true;errs++;streak=0;pen+=PEN_W;sel[i].missed=true;sBad();fx($("game"),"shake");
     $("err").textContent=errs;$("stk").textContent=0;
-    $("msg").style.color="var(--r)";$("msg").textContent="❌ خطأ! +10 ثواني عقوبة";
+    $("msg").style.color="var(--r)";$("msg").textContent="❌ خطأ! +"+PEN_W+" ثواني عقوبة";
   }
 }
 function timeout(){
-  active=false;lock();errs++;streak=0;pen+=10;sel[i].missed=true;sBad();fx($("game"),"shake");
+  active=false;lock();errs++;streak=0;pen+=PEN_T;sel[i].missed=true;sBad();fx($("game"),"shake");
   document.querySelectorAll(".opt").forEach(x=>{if(x.dataset.ok==="1")x.classList.add("ok")});
   $("err").textContent=errs;$("stk").textContent=0;$("d"+i).textContent="⏰";
-  $("msg").style.color="var(--r)";$("msg").textContent="⏰ انتهى الوقت! +10 ثواني";
+  $("msg").style.color="var(--r)";$("msg").textContent="⏰ انتهى الوقت! +"+PEN_T+" ثواني";
   setTimeout(next,1600);
 }
 async function finish(){
@@ -224,7 +252,7 @@ async function finish(){
   const me={name,total:t,errs};
   localBoard.push(me);localBoard.sort((a,b)=>a.total-b.total);
   show("end");sWin();confetti();
-  await submit(me);loadBoard(me);
+  const saved=await submit(me);if(saved===false)$("detail").textContent+=" ⚠️ لم تُحفظ نتيجتك في القائمة (الاسم مستخدم أو الجولة تغيّرت)";loadBoard(me);
 }
 function reset(){$("name").value="";show("start");loadBoard()}
 </script>
