@@ -55,7 +55,7 @@ input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);ba
 <button id="snd" onclick="toggleSound()" aria-label="الصوت">🔊</button>
 <div class="wrap">
 <h1>🔐 الهروب من غرفة السايبر</h1>
-<div class="sub">مهمة إنقاذ النظام — والوقت يمر! <small style="opacity:.5">v6</small></div>
+<div class="sub">مهمة إنقاذ النظام — والوقت يمر! <small style="opacity:.5">v7</small></div>
 
 <div id="start" class="card">
 <p>النظام تعرّض لاختراق وأنت محبوس داخل غرفة السايبر. افتح الأبواب بالإجابة الصحيحة. أسئلتك تُختار عشوائياً من بنك أكبر.</p>
@@ -112,7 +112,7 @@ let Q=[
 ["ماذا يمثل الثالوث CIA في أمن المعلومات؟",["السرية والسلامة والتوافر","الحاسوب والإنترنت والتطبيقات","التحكم والتحقق والتشغيل","النسخ والتخزين والإرسال"]],
 ["ما فائدة التحديث الأمني (Security Patch)؟",["إصلاح ثغرة أمنية معروفة في البرنامج","تغيير شكل البرنامج فقط","حذف بيانات المستخدم","زيادة عدد الإعلانات"]]
 ];
-let N=10,QT=20,PEN_W=10,PEN_T=10,HINTS=2,OPEN=true,SHOWLB=true,ANN="",SESSION=null,PINREQ=false;const $=id=>document.getElementById(id);
+let N=10,QT=20,PEN_W=10,PEN_T=10,HINTS=2,OPEN=true,SHOWLB=true,ANN="",SESSION=null,PINREQ=false,mySess=null,curQT=20,QH=null,errUntil=0,lastFull=0;const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let sel,i,t0,qT0,active=false,errs,pen,name,streak,hints,total=0,localBoard=[],muted=false,ac;
 function shuffle(a){a=a.slice();for(let k=a.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[a[k],a[j]]=[a[j],a[k]]}return a}
@@ -155,13 +155,12 @@ async function loadBoard(me){
   const html=drawBoard(list,shared,me);$("lb1").innerHTML=html;$("lb").innerHTML=html;
 }
 async function submit(me){
-  try{const r=await fetch(SUPABASE_URL+"/rest/v1/scores",{method:"POST",headers:{...SB,"Content-Type":"application/json",Prefer:"return=minimal"},body:JSON.stringify({...me,session_id:SESSION})});if(!r.ok){console.warn("Supabase insert:",r.status,await r.text());return false}return true}catch(e){console.warn(e);return false}
+  try{const r=await fetch(SUPABASE_URL+"/rest/v1/scores",{method:"POST",headers:{...SB,"Content-Type":"application/json",Prefer:"return=minimal"},body:JSON.stringify({...me,session_id:mySess})});if(!r.ok){console.warn("Supabase insert:",r.status,await r.text());return false}return true}catch(e){console.warn(e);return false}
 }
 async function rpc(fn,body){const r=await fetch(SUPABASE_URL+"/rest/v1/rpc/"+fn,{method:"POST",headers:{...SB,"Content-Type":"application/json"},body:JSON.stringify(body)});if(!r.ok)throw new Error(r.status);return r.json()}
 function applyConfig(){
   $("rules").innerHTML=`⏳ عندك <b>${QT} ثانية</b> لكل سؤال، وانتهاء الوقت = عقوبة ${PEN_T} ثواني.<br>⏱️ كل إجابة خاطئة تضيف <b>${PEN_W} ثواني</b>.<br>🔥 كل 3 إجابات صحيحة متتالية تخصم <b>3 ثواني</b>.<br>${HINTS?`💡 عندك ${HINTS} تلميح (يحذف خيارين، +5 ثواني).`:"🚫 لا توجد تلميحات في هذه الجولة."}`;
-  $("nn").textContent=N;
-  $("notice").textContent=!OPEN?"🔒 اللعبة مغلقة حالياً، انتظر إشارة المعلم":(!SESSION?"⚠️ لا توجد جولة نشطة":ANN);
+  if(Date.now()>errUntil)$("notice").textContent=!OPEN?"🔒 اللعبة مغلقة حالياً، انتظر إشارة المعلم":(!SESSION?"⚠️ لا توجد جولة نشطة":ANN);
   $("go").disabled=!OPEN||!SESSION;$("pin").classList.toggle("hide",!PINREQ);
 }
 async function loadConfig(){
@@ -175,8 +174,26 @@ async function loadConfig(){
   }catch(e){console.warn("config:",e)}
   applyConfig();
 }
-setInterval(async()=>{if(!$("game").classList.contains("hide"))return;await loadConfig();loadBoard()},15000);
-loadConfig().then(()=>loadBoard());
+/* live config: one tiny request every few seconds; changes made in the admin page appear without reloading */
+const POLL_MS=3000;
+const err=m=>{$("notice").textContent=m;errUntil=Date.now()+5000};
+async function pollConfig(){
+  try{
+    const c=await rpc("get_config",{}),s=c.settings,ss=c.session;
+    if(s){QT=s.question_time;N=s.num_questions;PEN_W=s.wrong_penalty;PEN_T=s.timeout_penalty;HINTS=s.hints;OPEN=s.game_open;SHOWLB=s.show_leaderboard;ANN=s.announcement||""}
+    SESSION=ss?ss.id:null;PINREQ=!!(ss&&ss.pin_required);
+    if(c.qhash!==QH){
+      const r=await fetch(SUPABASE_URL+"/rest/v1/questions?active=eq.true&select=q,correct,w1,w2,w3",{headers:SB,cache:"no-store"});
+      if(r.ok){const qs=await r.json();if(qs.length)Q=qs.map(x=>[x.q,[x.correct,x.w1,x.w2,x.w3]]);QH=c.qhash}
+    }
+    applyConfig();
+  }catch(e){
+    if(Date.now()-lastFull>15000){lastFull=Date.now();await loadConfig()}   // fallback if get_config() is not created yet
+  }
+}
+setInterval(pollConfig,POLL_MS);
+setInterval(()=>{if(!$("game").classList.contains("hide"))return;loadBoard()},5000);
+pollConfig().then(()=>loadBoard());
 
 /* game */
 async function begin(){
@@ -185,11 +202,11 @@ async function begin(){
   if(!name){$("name").focus();$("name").placeholder="اكتب اسمك أولاً";return}
   name=name.replace(/\s+/g," ");$("go").disabled=true;
   try{
-    if(PINREQ&&!(await rpc("check_pin",{p:$("pin").value.trim()}))){$("notice").textContent="❌ رمز الدخول غير صحيح";return}
-    if(await rpc("name_taken",{n:name}).catch(()=>false)){$("notice").textContent="⚠️ هذا الاسم مستخدم في هذه الجولة، أضف حرفاً أو رقماً";return}
-  }catch(e){$("notice").textContent="⚠️ تعذر الاتصال، حاول مرة أخرى";return}
-  finally{$("go").disabled=false}
-  sel=shuffle(Q).slice(0,N).map(([q,o])=>({q,o,missed:false}));
+    if(PINREQ&&!(await rpc("check_pin",{p:$("pin").value.trim()}))){err("❌ رمز الدخول غير صحيح");return}
+    if(await rpc("name_taken",{n:name}).catch(()=>false)){err("⚠️ هذا الاسم مستخدم في هذه الجولة، أضف حرفاً أو رقماً");return}
+  }catch(e){err("⚠️ تعذر الاتصال، حاول مرة أخرى");return}
+  finally{$("go").disabled=!OPEN||!SESSION}
+  mySess=SESSION;sel=shuffle(Q).slice(0,Math.min(N,Q.length)).map(([q,o])=>({q,o,missed:false}));$("nn").textContent=sel.length;
   i=0;errs=0;pen=0;streak=0;hints=HINTS;t0=Date.now();
   $("doors").innerHTML=sel.map((_,k)=>`<div class="door" id="d${k}">🔒</div>`).join("");
   show("game");render();
@@ -197,10 +214,10 @@ async function begin(){
 setInterval(()=>{
   if($("game").classList.contains("hide"))return;
   $("time").textContent=elapsed().toFixed(1);
-  if(active){const left=Math.max(0,QT-(Date.now()-qT0)/1000);$("qt").textContent=Math.ceil(left);$("qbar").style.width=left/QT*100+"%";if(left<=0)timeout()}
+  if(active){const left=Math.max(0,curQT-(Date.now()-qT0)/1000);$("qt").textContent=Math.ceil(left);$("qbar").style.width=left/curQT*100+"%";if(left<=0)timeout()}
 },100);
 function render(){
-  const cur=sel[i];qT0=Date.now();active=true;
+  const cur=sel[i];qT0=Date.now();curQT=QT;active=true;
   $("n").textContent=i+1;$("err").textContent=errs;$("stk").textContent=streak;$("msg").textContent="";
   $("hint").textContent=`💡 تلميح (${hints})`;$("hint").disabled=hints<1;
   document.querySelectorAll(".door").forEach((d,k)=>d.classList.toggle("cur",k===i));
@@ -211,7 +228,7 @@ function render(){
   });
 }
 function lock(){document.querySelectorAll(".opt").forEach(x=>x.disabled=true);$("hint").disabled=true}
-function next(){i++;i<N?render():finish()}
+function next(){i++;i<sel.length?render():finish()}
 function hint(){
   if(hints<1||!active)return;
   const w=[...document.querySelectorAll(".opt")].filter(b=>b.dataset.ok==="0"&&!b.disabled);
